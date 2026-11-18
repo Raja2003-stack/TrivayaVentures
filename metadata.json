@@ -1,0 +1,6 @@
+{
+  "name": "Trivaya Ventures",
+  "description": "Trivaya Ventures — Real estate in Bengaluru. Trust, Reliability, Modernity.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

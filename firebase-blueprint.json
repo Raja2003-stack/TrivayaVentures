@@ -1,0 +1,132 @@
+{
+  "entities": {
+    "Project": {
+      "title": "Project",
+      "description": "Real estate project listing managed by Trivaya Ventures admin; published projects are readable by the public.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "minLength": 2, "maxLength": 160 },
+        "developerName": { "type": "string", "maxLength": 160 },
+        "area": { "type": "string", "maxLength": 120 },
+        "city": { "type": "string", "maxLength": 120 },
+        "pincode": { "type": "string", "maxLength": 20 },
+        "location": { "type": "string", "maxLength": 260 },
+        "googleMapsUrl": { "type": "string", "maxLength": 1000 },
+        "priceMin": { "type": "string", "maxLength": 60 },
+        "priceMax": { "type": "string", "maxLength": 60 },
+        "priceOnRequest": { "type": "boolean" },
+        "pricePerSqFt": { "type": "string", "maxLength": 60 },
+        "startingPrice": { "type": "string", "maxLength": 80 },
+        "type": {
+          "type": "string",
+          "enum": ["Apartment", "Villa", "Farm Land", "Plot", "Other"]
+        },
+        "status": {
+          "type": "string",
+          "enum": ["New Launch", "Under Construction", "Ready to Move"]
+        },
+        "configurations": { "type": "array" },
+        "configuration": { "type": "string", "maxLength": 160 },
+        "parking": { "type": "string", "maxLength": 120 },
+        "floors": { "type": "string", "maxLength": 120 },
+        "totalUnits": { "type": "string", "maxLength": 80 },
+        "totalLandArea": { "type": "string", "maxLength": 120 },
+        "facing": { "type": "string", "maxLength": 120 },
+        "possessionDate": { "type": "string", "maxLength": 120 },
+        "reraNumber": { "type": "string", "maxLength": 120 },
+        "highlights": { "type": "array" },
+        "description": { "type": "string", "maxLength": 5000 },
+        "photos": { "type": "array" },
+        "mainPhoto": { "type": "string", "maxLength": 1000 },
+        "unitTable": { "type": "array" },
+        "amenities": { "type": "array" },
+        "nearbyPlaces": { "type": "array" },
+        "developer": { "type": "object" },
+        "faqs": { "type": "array" },
+        "published": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "type", "status", "published", "createdAt", "updatedAt"]
+    },
+    "Enquiry": {
+      "title": "Enquiry",
+      "description": "Lead enquiry submitted by a visitor from the Contact form or a Project Detail modal.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "phone": { "type": "string", "maxLength": 30 },
+        "email": { "type": "string", "maxLength": 160 },
+        "interestedIn": {
+          "type": "string",
+          "enum": ["Apartment", "Villa", "Farm Land", "Plot", "Other"]
+        },
+        "message": { "type": "string", "maxLength": 2000 },
+        "projectName": { "type": "string", "maxLength": 160 },
+        "source": {
+          "type": "string",
+          "enum": ["contact_section", "project_modal"]
+        },
+        "status": {
+          "type": "string",
+          "enum": ["new", "contacted", "closed"]
+        },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "source", "status", "createdAt"]
+    },
+    "Post": {
+      "title": "Post",
+      "description": "Blog post article managed by Trivaya Ventures admins; only published posts are readable by the public.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "minLength": 2, "maxLength": 200 },
+        "slug": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 160,
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        },
+        "category": {
+          "type": "string",
+          "enum": ["Market Trends", "Buying Guides", "Legal and RERA", "Investment", "Lifestyle"]
+        },
+        "summary": { "type": "string", "maxLength": 160 },
+        "coverImage": { "type": "string", "maxLength": 1000 },
+        "coverImageAlt": { "type": "string", "maxLength": 200 },
+        "content": { "type": "string", "maxLength": 100000 },
+        "authorName": { "type": "string", "maxLength": 120 },
+        "tags": { "type": "array" },
+        "publishDate": { "type": "string", "maxLength": 40 },
+        "allowComments": { "type": "boolean" },
+        "readingTimeMinutes": { "type": "integer" },
+        "published": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "title",
+        "slug",
+        "category",
+        "allowComments",
+        "published",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/projects/{projectId}": {
+      "schema": { "$ref": "#/entities/Project" },
+      "description": "Real estate projects; published projects readable by public, all operations restricted to verified admins samprathap7@gmail.com and bijju9880@gmail.com."
+    },
+    "/enquiries/{enquiryId}": {
+      "schema": { "$ref": "#/entities/Enquiry" },
+      "description": "Visitor-created enquiries containing PII; readable, updatable, and deletable only by verified admins samprathap7@gmail.com and bijju9880@gmail.com."
+    },
+    "/posts/{postId}": {
+      "schema": { "$ref": "#/entities/Post" },
+      "description": "Blog articles; published posts readable by public, all draft reads and all writes restricted to verified admins samprathap7@gmail.com and bijju9880@gmail.com."
+    }
+  }
+}

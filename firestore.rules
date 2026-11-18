@@ -1,0 +1,265 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Reusable security primitives
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn()
+        && request.auth.token.email_verified == true
+        && request.auth.token.email in ['samprathap7@gmail.com', 'bijju9880@gmail.com'];
+    }
+
+    function isOptionalString(data, key, maxLen) {
+      return !(key in data) || (data[key] is string && data[key].size() <= maxLen);
+    }
+
+    function isOptionalBool(data, key) {
+      return !(key in data) || data[key] is bool;
+    }
+
+    function isOptionalMap(data, key) {
+      return !(key in data) || data[key] is map;
+    }
+
+    function isOptionalList(data, key, maxLen) {
+      return !(key in data) || (data[key] is list && data[key].size() <= maxLen);
+    }
+
+    // Validation blueprint: Project
+    function isValidProject(data) {
+      return data.keys().hasAll([
+          'name',
+          'type',
+          'status',
+          'published',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'name',
+          'developerName',
+          'area',
+          'city',
+          'pincode',
+          'location',
+          'googleMapsUrl',
+          'priceMin',
+          'priceMax',
+          'priceOnRequest',
+          'pricePerSqFt',
+          'startingPrice',
+          'type',
+          'status',
+          'configurations',
+          'configuration',
+          'parking',
+          'floors',
+          'totalUnits',
+          'totalLandArea',
+          'facing',
+          'possessionDate',
+          'reraNumber',
+          'highlights',
+          'description',
+          'photos',
+          'mainPhoto',
+          'unitTable',
+          'amenities',
+          'nearbyPlaces',
+          'developer',
+          'faqs',
+          'published',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.name is string && data.name.size() >= 2 && data.name.size() <= 160
+        && data.type in ['Apartment', 'Villa', 'Farm Land', 'Plot', 'Other']
+        && data.status in ['New Launch', 'Under Construction', 'Ready to Move']
+        && data.published is bool
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp
+        && isOptionalString(data, 'developerName', 160)
+        && isOptionalString(data, 'area', 120)
+        && isOptionalString(data, 'city', 120)
+        && isOptionalString(data, 'pincode', 20)
+        && isOptionalString(data, 'location', 260)
+        && isOptionalString(data, 'googleMapsUrl', 1000)
+        && isOptionalString(data, 'priceMin', 60)
+        && isOptionalString(data, 'priceMax', 60)
+        && isOptionalBool(data, 'priceOnRequest')
+        && isOptionalString(data, 'pricePerSqFt', 60)
+        && isOptionalString(data, 'startingPrice', 80)
+        && isOptionalString(data, 'configuration', 160)
+        && isOptionalString(data, 'parking', 120)
+        && isOptionalString(data, 'floors', 120)
+        && isOptionalString(data, 'totalUnits', 80)
+        && isOptionalString(data, 'totalLandArea', 120)
+        && isOptionalString(data, 'facing', 120)
+        && isOptionalString(data, 'possessionDate', 120)
+        && isOptionalString(data, 'reraNumber', 120)
+        && isOptionalString(data, 'description', 5000)
+        && isOptionalString(data, 'mainPhoto', 1000)
+        && isOptionalMap(data, 'developer')
+        && isOptionalList(data, 'configurations', 20)
+        && (!('configurations' in data) || data.configurations.size() == 0 || data.configurations[0] is string)
+        && isOptionalList(data, 'highlights', 30)
+        && (!('highlights' in data) || data.highlights.size() == 0 || data.highlights[0] is string)
+        && isOptionalList(data, 'photos', 25)
+        && (!('photos' in data) || data.photos.size() == 0 || data.photos[0] is map)
+        && isOptionalList(data, 'unitTable', 30)
+        && (!('unitTable' in data) || data.unitTable.size() == 0 || data.unitTable[0] is map)
+        && isOptionalList(data, 'amenities', 40)
+        && (!('amenities' in data) || data.amenities.size() == 0 || data.amenities[0] is map)
+        && isOptionalList(data, 'nearbyPlaces', 30)
+        && (!('nearbyPlaces' in data) || data.nearbyPlaces.size() == 0 || data.nearbyPlaces[0] is map)
+        && isOptionalList(data, 'faqs', 30)
+        && (!('faqs' in data) || data.faqs.size() == 0 || data.faqs[0] is map);
+    }
+
+    // Validation blueprint: Enquiry
+    function isValidEnquiry(data) {
+      return data.keys().hasAll(['name', 'source', 'status', 'createdAt'])
+        && data.keys().hasOnly([
+          'name',
+          'phone',
+          'email',
+          'interestedIn',
+          'message',
+          'projectName',
+          'source',
+          'status',
+          'createdAt'
+        ])
+        && data.name is string && data.name.size() >= 1 && data.name.size() <= 120
+        && data.source in ['contact_section', 'project_modal']
+        && data.status in ['new', 'contacted', 'closed']
+        && data.createdAt is timestamp
+        && (
+          ('phone' in data && data.phone is string && data.phone.size() >= 7 && data.phone.size() <= 30)
+          || ('email' in data && data.email is string && data.email.size() >= 5 && data.email.size() <= 160)
+        )
+        && isOptionalString(data, 'phone', 30)
+        && isOptionalString(data, 'email', 160)
+        && (!('interestedIn' in data) || data.interestedIn in ['Apartment', 'Villa', 'Farm Land', 'Plot', 'Other'])
+        && isOptionalString(data, 'message', 2000)
+        && isOptionalString(data, 'projectName', 160);
+    }
+
+    // Validation blueprint: Blog Post
+    function isValidPost(data) {
+      return data.keys().hasAll([
+          'title',
+          'slug',
+          'category',
+          'allowComments',
+          'published',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'title',
+          'slug',
+          'category',
+          'summary',
+          'coverImage',
+          'coverImageAlt',
+          'content',
+          'authorName',
+          'tags',
+          'publishDate',
+          'allowComments',
+          'readingTimeMinutes',
+          'published',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.title is string && data.title.size() >= 2 && data.title.size() <= 200
+        && data.slug is string && data.slug.size() >= 2 && data.slug.size() <= 160 && data.slug.matches('^[a-z0-9]+(?:-[a-z0-9]+)*$')
+        && data.category in ['Market Trends', 'Buying Guides', 'Legal and RERA', 'Investment', 'Lifestyle']
+        && data.allowComments is bool
+        && data.published is bool
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp
+        && isOptionalString(data, 'summary', 160)
+        && isOptionalString(data, 'coverImage', 1000)
+        && isOptionalString(data, 'coverImageAlt', 200)
+        && isOptionalString(data, 'content', 100000)
+        && isOptionalString(data, 'authorName', 120)
+        && isOptionalString(data, 'publishDate', 40)
+        && (!('readingTimeMinutes' in data) || (data.readingTimeMinutes is number && data.readingTimeMinutes >= 1 && data.readingTimeMinutes <= 240))
+        && isOptionalList(data, 'tags', 15)
+        && (!('tags' in data) || data.tags.size() == 0 || data.tags[0] is string);
+    }
+
+    // Projects collection: Published projects publicly readable, all operations allowed for admin
+    match /projects/{projectId} {
+      allow get: if isAdmin() || (isValidId(projectId) && existing().published == true);
+      allow list: if isAdmin() || resource.data.published == true;
+      allow create: if isAdmin()
+        && isValidId(projectId)
+        && isValidProject(incoming())
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isAdmin()
+        && isValidId(projectId)
+        && isValidProject(incoming())
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time;
+      allow delete: if isAdmin() && isValidId(projectId);
+    }
+
+    // Enquiries collection: Visitor create-only, admin-only read/update/delete
+    match /enquiries/{enquiryId} {
+      allow get: if isAdmin() && isValidId(enquiryId);
+      allow list: if isAdmin();
+      allow create: if isValidId(enquiryId)
+        && isValidEnquiry(incoming())
+        && incoming().status == 'new'
+        && incoming().createdAt == request.time;
+      allow update: if isAdmin()
+        && isValidId(enquiryId)
+        && isValidEnquiry(incoming())
+        && incoming().createdAt == existing().createdAt
+        && incoming().diff(existing()).affectedKeys().hasOnly(['status']);
+      allow delete: if isAdmin() && isValidId(enquiryId);
+    }
+
+    // Posts collection: Published posts publicly readable; draft reads and all writes admin-only
+    match /posts/{postId} {
+      allow get: if isAdmin() || (isValidId(postId) && existing().published == true);
+      allow list: if isAdmin() || resource.data.published == true;
+      allow create: if isAdmin()
+        && isValidId(postId)
+        && isValidPost(incoming())
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isAdmin()
+        && isValidId(postId)
+        && isValidPost(incoming())
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time;
+      allow delete: if isAdmin() && isValidId(postId);
+    }
+  }
+}

@@ -1,0 +1,41 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    function isAdmin() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && request.auth.token.email in ['samprathap7@gmail.com', 'bijju9880@gmail.com'];
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidImageUpload() {
+      return request.resource != null
+        && request.resource.size > 0
+        && request.resource.size < 10 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+
+    // Public can view project images; only verified admin can upload/replace/delete
+    match /projects/{projectId}/{allPaths=**} {
+      allow read: if isValidId(projectId);
+      allow create, update: if isAdmin() && isValidId(projectId) && isValidImageUpload();
+      allow delete: if isAdmin() && isValidId(projectId);
+    }
+
+    // Public can view blog images; only verified admin can upload/replace/delete
+    match /blog/{postId}/{allPaths=**} {
+      allow read: if isValidId(postId);
+      allow create, update: if isAdmin() && isValidId(postId) && isValidImageUpload();
+      allow delete: if isAdmin() && isValidId(postId);
+    }
+
+    // Deny all other storage paths by default
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
